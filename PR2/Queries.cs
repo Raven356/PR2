@@ -8,121 +8,199 @@ namespace PR2
 {
     class Queries
     {
-        public IEnumerable<XElement> SelectAllPlanes(XDocument xDocument)
+        readonly XDocument AirCompaniesDocument = XDocument.Load("AirCompanies.xml");
+        readonly XDocument ConnectionsDocument = XDocument.Load("Connections.xml");
+        readonly XDocument FlightsDocument = XDocument.Load("Flights.xml");
+        readonly XDocument HelicoptersDocument = XDocument.Load("Helicopters.xml");
+        readonly XDocument PlanesDocument = XDocument.Load("Planes.xml");
+        public IEnumerable<XElement> SelectAllPlanes()
         {
-            Console.WriteLine("1. Select all planes:");
-            var selectAllPlanes = xDocument.Descendants("plane").Select(x => x);
-            return selectAllPlanes;
+            return PlanesDocument.Descendants("planes");
         }
 
-        public IEnumerable<XElement> CompaniesFromUkraine(XDocument xDocument)
+        public IEnumerable<XElement> CompaniesFromUkraine()
         {
-            Console.WriteLine("\n2. Select all companies from Ukraine:");
-            var companiesFromUkraine = xDocument.Descendants("office_location").Where(x => x.ToString().Contains("Ukraine"));
+            var companiesFromUkraine = AirCompaniesDocument.Descendants("air_company")
+                .Where(x => x
+                    .Element("office_location")
+                    .Value
+                    .Contains("Ukraine"));
             return companiesFromUkraine;
         }
 
-        public IEnumerable<XElement> HelicoptersByDescending(XDocument xDocument)
+        public IEnumerable<XElement> HelicoptersByDescending()
         {
-            Console.WriteLine("\n3. Sort helicopter's types by descending:");
-            var helicoptersByDescending = from x in xDocument.Descendants("model_name")
-                                          orderby x.Value descending
+
+            var helicoptersByDescending = from x in HelicoptersDocument.Descendants("helicopter")
+                                          orderby x.Element("model_name").Value descending
                                           select x;
             return helicoptersByDescending;
         }
 
-        public IEnumerable<XElement> SelectParticularPlane(XDocument xDocument, string modelName)
+        public IEnumerable<XElement> SelectParticularPlane(string plane)
         {
-            Console.WriteLine("\n4. Select object from planes:");
-            var particularPlane = xDocument.Descendants("plane").Where(x => x.Element("model_name").Value.Contains(modelName));
+
+            var particularPlane = PlanesDocument.Descendants("plane")
+                .Where((x) => { return x
+                    .Element("model_name")
+                    .Value
+                    .Equals(plane); });
             return particularPlane;
         }
 
-        public IEnumerable<string> SelectPlanesAndHeliesFromSameCompany(XDocument xDocument)
+        public Dictionary<string, List<HelicoptersWithPlanes>> SelectHeliesAndPlanesWithSameCompanyCipher()
         {
-            Console.WriteLine("\n5. Select planes and helicopters which belong to same company:");
-            var aircraftFromSameCountry = from x in xDocument.Descendants("plane")
-                                          from y in xDocument.Descendants("helicopter")
-                                          where x.Parent.Parent.Element("company_cipher") == y.Parent.Parent.Element("company_cipher")
-                                          select "Plane " + x.Element("model_name") + " and helicopter " + y.Element("model_name") + " belong to same company";
-            return aircraftFromSameCountry;
+
+            var heliesAndPlanesWithSameCompanyCipher = from x in HelicoptersDocument.Descendants("helicopter")
+                                                       join y in PlanesDocument.Descendants("plane")
+                                                         on x.Element("company_cipher")
+                                                         equals y.Element("company_cipher")
+                                                       group new HelicoptersWithPlanes { Plane = y, Helicopter = x }
+                                                         by x.Element("company_cipher").Value
+                                            into grouped
+                                                       select grouped;
+
+            return heliesAndPlanesWithSameCompanyCipher.ToDictionary(x => x.Key, x => x.ToList());
         }
 
-        public IEnumerable<XElement> SelectCompaniesWhichStartsFromLetter(XDocument xDocument, char letter)
+
+        public IEnumerable<XElement> SelectCompaniesWhichStartsFromLetter(char letter)
         {
-            Console.WriteLine($"\n6. Select all companies that label starts with {letter}:");
-            var companiesWhichStartWhithLetter = xDocument.Descendants("label").Where(x => x.Value.StartsWith(letter));
+
+            var companiesWhichStartWhithLetter = AirCompaniesDocument
+                .Descendants("air_company")
+                .Where(x => x
+                    .Element("label")
+                    .Value
+                    .StartsWith(letter));
             return companiesWhichStartWhithLetter;
         }
 
-        public IEnumerable<XElement> SkipWhilePlaneMaxDistanceLower(XDocument xDocument, decimal lower)
+        public IEnumerable<XElement> SkipWhilePlaneMaxDistanceLower( decimal lower)
         {
-            Console.WriteLine($"\n7. Skip while planes max distance < {lower}:");
-            return xDocument.Descendants("plane").SkipWhile(x => Decimal.Parse(x.Element("max_distance").Value) < lower);
+
+            return PlanesDocument
+                .Descendants("plane")
+                .SkipWhile(x => decimal
+                    .Parse( x
+                        .Element("max_distance")
+                        .Value) < lower);
         }
 
-        public IEnumerable<XElement> TakeWhileLoadCapacityLower(XDocument xDocument, decimal loadCapacity)
+        public IEnumerable<XElement> TakeWhileLoadCapacityLower( decimal loadCapacity)
         {
-            Console.WriteLine($"\n8. Take while helicopter load capacity < {loadCapacity}:");
-            return xDocument.Descendants("helicopter").TakeWhile(x => Decimal.Parse(x.Element("load_capacity").Value) < loadCapacity);
+
+            return HelicoptersDocument
+                .Descendants("helicopter")
+                .TakeWhile(x => decimal
+                    .Parse( x
+                        .Element("load_capacity")
+                        .Value) < loadCapacity);
         }
 
-        public IOrderedEnumerable<IGrouping<string, XElement>> GroupPlanesByTakeOfLength(XDocument xDocument)
+        public Dictionary<string, List<XElement>> GroupHeliesByCompanyCipher()
         {
-            Console.WriteLine("\n9. Group planes by takeof length :");
-            var groupHelicoptersByCipher = from x in xDocument.Descendants("plane")
-                                           group x by x.Element("takeof_length").Value into q
-                                           orderby q.Key
+
+            var groupHelicoptersByCipher = from x in HelicoptersDocument.Descendants("helicopter")
+                                           group x by x.Element("company_cipher").Value into q
                                            select q;
-            return groupHelicoptersByCipher;
+            return groupHelicoptersByCipher.ToDictionary(x => x.Key, x => x.ToList());
         }
 
-        public IEnumerable<XElement> SkipFirstAndTakeTwoCompanies(XDocument xDocument)
+        public Dictionary<string, List<XElement>> GroupPlanesByFlights()
         {
-            Console.WriteLine("\n10. Skip 1 company and take 2:");
-            return xDocument.Descendants("air_company").Skip(1).Take(2);
+            var groupPlanesByFlights = from x in PlanesDocument
+                                        .Descendants("plane")
+                                       join y in ConnectionsDocument
+                                        .Descendants("connection") 
+                                            on x.Attribute("id")
+                                            .Value 
+                                                equals y.Element("id_plane").Value
+                                       join z in FlightsDocument
+                                        .Descendants("flight") 
+                                            on y.Element("id_flight").Value 
+                                                equals z.Attribute("id").Value
+                                       group x by z.ToString() into groupedPlanesByFlights
+                                       select groupedPlanesByFlights;
+            return groupPlanesByFlights.ToDictionary(x => x.Key, x => x.ToList());
         }
 
-        public string SelectAverageMaxDistanceFromAllAircrafts(XDocument xDocument)
+        public decimal SelectAverageMaxDistanceFromAllAircrafts()
         {
-            Console.WriteLine("\n13. Select average max distance from all aircrafts:");
-            var averageMaxDistance = xDocument.Descendants("plane").Select(p => Decimal.Parse(p.Element("max_distance").Value)).Concat(xDocument.Descendants("helicopter").Select(h =>Decimal.Parse( h.Element("max_distance").Value)));
-            return $"Average max distance from all aircrafts: {averageMaxDistance.Average()}";
+
+            var averageMaxDistance = PlanesDocument.Descendants("plane")
+                .Select(p => decimal
+                    .Parse( p
+                        .Element("max_distance")
+                        .Value))
+                .Concat(HelicoptersDocument
+                    .Descendants("helicopter")
+                        .Select(h => decimal
+                            .Parse(h.Element("max_distance")
+                                .Value)));
+            return averageMaxDistance.Average();
         }
 
-        public IEnumerable<string> SelectPlanesAndHeliesWithParticularCondidtion(XDocument xDocument, decimal maxDistance, decimal maxHeight)
+        public IEnumerable<XElement> SelectAirCompaniesWithParticularCondidtion( decimal maxDistance, decimal maxHeight)
         {
-            Console.WriteLine($"\n11. Select datalinks where planes max distance > {maxDistance} and helicopters max height > {maxHeight}, order by company cipher in descending order:");
-            var dataLinksWithParticularCondition = from x in xDocument.Descendants("plane")
-                                                   join y in xDocument.Descendants("helicopter") on x.Parent.Parent equals y.Parent.Parent
-                                                   where Decimal.Parse(x.Element("max_distance").Value) > maxDistance && Decimal.Parse(y.Element("max_height").Value) > maxHeight
-                                                   orderby x.Parent.Parent.Element("company_cipher").Value descending
-                                                   select $"PlaneDistance = {Decimal.Parse(x.Element("max_distance").Value)}; helicopterHeight = {Decimal.Parse(y.Element("max_height").Value)}; cipher = {x.Parent.Parent.Element("company_cipher").Value}";
-            return dataLinksWithParticularCondition;
+
+            var airCompaniesWithParticularCondition = from q in AirCompaniesDocument.Descendants("air_company")
+                                                      join y in PlanesDocument.Descendants("plane") 
+                                                        on q.Element("company_cipher").Value 
+                                                            equals y.Element("company_cipher").Value
+                                                      join z in HelicoptersDocument.Descendants("helicopter") 
+                                                        on q.Element("company_cipher").Value 
+                                                            equals z.Element("company_cipher").Value
+                                                      where decimal.Parse( y.Element("max_distance").Value) 
+                                                            > maxDistance 
+                                                        && decimal.Parse( z.Element("max_height").Value) 
+                                                            > maxHeight
+                                                      orderby q.Element("company_cipher").Value descending
+                                                      select q;
+            return airCompaniesWithParticularCondition;
         }
 
-        public IEnumerable<XElement> SelectAllAircraftTypes(XDocument xDocument)
+        public IEnumerable<string> SelectAllAircraftTypes()
         {
-            Console.WriteLine("\n12. Select all aircraft types:");
-            var allAircraftTypes = xDocument.Descendants("plane").Select(p => p.Element("model_name")).Concat(xDocument.Descendants("helicopter").Select(x => x.Element("model_name")));
+
+            var allAircraftTypes = PlanesDocument.Descendants("plane")
+                .Select(p => p.Element("model_name").Value)
+                .Concat(HelicoptersDocument.Descendants("helicopter")
+                    .Select(x => x.Element("model_name").Value));
             return allAircraftTypes;
         }
 
-        public string SelectMaxHeightOfHelicopters(XDocument xDocument)
+
+        public decimal SelectMaxHeightOfHelicopters()
         {
-            Console.WriteLine("\n14. Select max height of helicopter:");
-            return $"Max height = {xDocument.Descendants("helicopter").Max(p => Decimal.Parse(p.Element("max_height").Value))}";
+
+            return HelicoptersDocument.Descendants("helicopter")
+                .Max(p => decimal.Parse( p.Element("max_height").Value));
         }
 
-        public IEnumerable<string> CheckIfThereIsCompanyWithThisLabel(XDocument xDocument)
+        public IEnumerable<bool> CheckIfThereIsCompanyWithThisLabel()
         {
-            Console.WriteLine($"\n15. Check if there is an air company from Ukraine with this label:");
+
             bool isCompanyExists;
-            List<string> labels = new List<string> { "Super Planes", "Planes", "asdaffs", "Speedy Wings", "LowCostAirlines", "Simple Planes" };
+            List<string> labels = 
+                new List<string> { "Super Planes"
+                    , "Planes"
+                    , "asdaffs"
+                    , "Speedy Wings"
+                    , "Low Cost Airlines"
+                    , "Simple Planes" };
             foreach (var x in labels)
             {
-                isCompanyExists = xDocument.Descendants("air_company").Where(p => p.Element("office_location").Value.Contains("Ukraine")).Select(p => p.Element("label").Value).Contains(x);
-                yield return ($"The list airCompanies {(isCompanyExists ? "contains" : "doesn't contain")} <<{x}>> in companies labels where country is Ukraine");
+                isCompanyExists = AirCompaniesDocument.Descendants("air_company")
+                    .Where(p => p
+                        .Element("office_location")
+                        .Value
+                        .Contains("Ukraine"))
+                    .Select(p => p
+                        .Element("label")
+                        .Value)
+                    .Contains(x);
+                yield return isCompanyExists;
             }
         }
 

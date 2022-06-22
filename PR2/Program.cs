@@ -12,15 +12,18 @@ namespace PR2
                 try
                 {
                     CreateXml createXML = new CreateXml { Lists = new Menu().StartMenu()};
-                    createXML.CreateFile();
+                    createXML.CreateFiles();
 
-                    XDocument xDocument = new ReadFile().ReadXmlFile();
-
+                    ReadFile readFile = new ReadFile();
                     PrintDocumentOnScreen printDocument = new PrintDocumentOnScreen();
-                    printDocument.PrintDocument(xDocument);
+                    printDocument.PrintDocument(readFile.ReadXmlFile("AirCompanies.xml")
+                        , readFile.ReadXmlFile("Connections.xml")
+                        , readFile.ReadXmlFile("Flights.xml")
+                        , readFile.ReadXmlFile("Helicopters.xml")
+                        , readFile.ReadXmlFile("Planes.xml"));
 
                     ExecuteQueries executeQueries = new ExecuteQueries();
-                    executeQueries.Execute(xDocument);
+                    executeQueries.Execute();
 
                     new ContinueProgram().Continue();
                     Console.Clear();

@@ -8,28 +8,71 @@ namespace PR2
     class CreateXml
     {
         public Lists Lists { get; set; }
-        public void CreateFile()
+
+        delegate void CreateDocumentDelegate(XmlWriter xmlWriter);
+        public void CreateFiles()
         {
-            if (Lists == null || Lists.Helicopters.Count == 0 || Lists.AirCompanies.Count == 0 || Lists.Planes.Count == 0)
+            if (Lists == null || Lists.Helicopters.Count == 0 || Lists.AirCompanies.Count == 0 
+                || Lists.Planes.Count == 0)
             {
-                ErrorMessage();
-                return;
+                throw new ArgumentException("Failed to create file");
             }
 
-            XmlWriter xmlWriter = XmlWriter.Create("lists.xml");
+            
 
-            CreateRootNode(xmlWriter);
+            CreateDocument( CreateAirCompaniesNodes, "AirCompanies.xml");
+            CreateDocument( CreatePlaneNodes, "Planes.xml");
+            CreateDocument( CreateHelicopterNodes, "Helicopters.xml");
+            CreateDocument( CreateFlightsNodes, "Flights.xml");
+            CreateDocument( CreateConnectionsNodes, "Connections.xml");
 
-            xmlWriter.Close();
+            
         }
 
-        private void CreateRootNode(XmlWriter xmlWriter)
+        private void CreateDocument(CreateDocumentDelegate createDocumentDelegate, string name)
         {
+            XmlWriter xmlWriter = XmlWriter.Create(name);
             xmlWriter.WriteStartDocument();
 
-            CreateAirCompaniesNodes(xmlWriter);
+            createDocumentDelegate.Invoke(xmlWriter);
 
             xmlWriter.WriteEndDocument();
+
+            xmlWriter.Dispose();
+        }
+
+        private void CreateFlightsNodes(XmlWriter xmlWriter)
+        {
+            xmlWriter.WriteStartElement("flights");
+            foreach(var flight in Lists.Flights)
+            {
+                xmlWriter.WriteStartElement("flight");
+
+                xmlWriter.WriteAttributeString("id", flight.ID.ToString());
+
+                CreateNode(xmlWriter, "departure_location", flight.DepartureLocation.ToString());
+
+                CreateNode(xmlWriter, "destination_location", flight.DestinationLocation.ToString());
+
+                xmlWriter.WriteEndElement();
+            }
+            xmlWriter.WriteEndElement();
+        }
+
+        private void CreateConnectionsNodes(XmlWriter xmlWriter)
+        {
+            xmlWriter.WriteStartElement("connections");
+            foreach(var connection in Lists.FligtsToPlanesConnections)
+            {
+                xmlWriter.WriteStartElement("connection");
+
+                CreateNode(xmlWriter, "id_plane", connection.IDPlane.ToString());
+
+                CreateNode(xmlWriter, "id_flight", connection.IDFlight.ToString());
+
+                xmlWriter.WriteEndElement();
+            }
+            xmlWriter.WriteEndElement();
         }
 
         private void CreateAirCompaniesNodes(XmlWriter xmlWriter)
@@ -43,15 +86,13 @@ namespace PR2
 
                 CreateNode(xmlWriter, "label", airCompany.Label);
 
-                CreateNode(xmlWriter, "office_location", airCompany.Office_Location.ToString());
+                CreateNode(xmlWriter, "office_location", airCompany.OfficeLocation.ToString());
 
                 CreateNode(xmlWriter, "creation_date", airCompany.CreationDate.ToString());
 
                 CreateNode(xmlWriter, "company_cipher", airCompany.CompanyCipher.ToString());
 
-                CreateHelicopterNodes(xmlWriter, airCompany);
 
-                CreatePlaneNodes(xmlWriter, airCompany);
 
                 xmlWriter.WriteEndElement();
             }
@@ -59,14 +100,13 @@ namespace PR2
             xmlWriter.WriteEndElement();
         }
 
-        private void CreateHelicopterNodes(XmlWriter xmlWriter, AirCompany airCompany)
+        private void CreateHelicopterNodes(XmlWriter xmlWriter)
         {
             xmlWriter.WriteStartElement("helicopters");
 
             foreach (var helicopter in Lists.Helicopters)
             {
-                if (helicopter.CompanyCipher.Equals(airCompany.CompanyCipher))
-                {
+                
                     xmlWriter.WriteStartElement("helicopter");
 
                     CreateAircraftNodes(xmlWriter, helicopter);
@@ -74,20 +114,19 @@ namespace PR2
                     CreateNode(xmlWriter, "max_height", helicopter.MaxHeight.ToString());
 
                     xmlWriter.WriteEndElement();
-                }
+                
             }
 
             xmlWriter.WriteEndElement();
         }
 
-        private void CreatePlaneNodes(XmlWriter xmlWriter, AirCompany airCompany)
+        private void CreatePlaneNodes(XmlWriter xmlWriter)
         {
             xmlWriter.WriteStartElement("planes");
 
             foreach(var plane in Lists.Planes)
             {
-                if (plane.CompanyCipher.Equals(airCompany.CompanyCipher))
-                {
+                
                     xmlWriter.WriteStartElement("plane");
 
                     CreateAircraftNodes(xmlWriter, plane);
@@ -98,7 +137,7 @@ namespace PR2
 
                     xmlWriter.WriteEndElement();
                     
-                }
+                
             }
 
             xmlWriter.WriteEndElement();
@@ -113,6 +152,8 @@ namespace PR2
             CreateNode(xmlWriter, "load_capacity", aircraft.LoadCapacity.ToString());
 
             CreateNode(xmlWriter, "max_distance", aircraft.MaxDistance.ToString());
+
+            CreateNode(xmlWriter, "company_cipher", aircraft.CompanyCipher);
         }
 
         private void CreateNode(XmlWriter xmlWriter, string name, string text)
@@ -120,11 +161,6 @@ namespace PR2
             xmlWriter.WriteStartElement(name);
             xmlWriter.WriteString(text);
             xmlWriter.WriteEndElement();
-        }
-
-        private void ErrorMessage()
-        {
-            throw new ArgumentException("Failed to create file");
         }
     }
 }

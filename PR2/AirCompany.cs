@@ -1,4 +1,4 @@
-﻿
+﻿using System;
 
 namespace PR2
 {
@@ -6,13 +6,13 @@ namespace PR2
     {
         public uint ID { get; set; }
         public string Label { get; set; }
-        public OfficeLocation Office_Location { get; set; }
-        public string CreationDate { get; set; }
+        public Location OfficeLocation { get; set; }
+        public DateTime CreationDate { get; set; }
         public string CompanyCipher { get; set; }
 
         public override string ToString()
         {
-            return $"ID: {ID}, Label: {Label}, Office Location: {Office_Location}, CreationDate: {CreationDate}, CompanyCipher: {CompanyCipher}";
+            return $"ID: {ID}, Label: {Label}, Office Location: {OfficeLocation}, CreationDate: {CreationDate}, CompanyCipher: {CompanyCipher}";
         }
 
     }

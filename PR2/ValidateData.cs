@@ -16,54 +16,57 @@ namespace PR2
             return false;
         }
 
-        public void CheckCompanyCipher(string[] values, Lists lists)
+        public bool CheckCompanyCipher(string[] values, Lists lists)
         {
-            if (!IsCompanyCipherExists(values[4], lists))
-                throw new ArgumentException("No such company cipher");
+            return IsCompanyCipherExists(values[4], lists);
         }
 
-        public void CheckID(List<AirCompany> list, int ID)
+        public bool CheckID(List<AirCompany> list, int ID)
         {
             foreach(var x in list)
             {
                 if(x.ID == ID)
                 {
-                    throw new ArgumentException("Already existing ID");
+                    return false;
                 }
             }
+            return true;
         }
 
-        public void CheckID(List<Plane> list, int ID)
+        public bool CheckID(List<Plane> list, int ID)
         {
             foreach (var x in list)
             {
                 if (x.ID == ID)
                 {
-                    throw new ArgumentException("Already existing ID");
+                    return false;
                 }
             }
+            return true;
         }
 
-        public void CheckID(List<Helicopter> list, int ID)
+        public bool CheckID(List<Helicopter> list, int ID)
         {
             foreach (var x in list)
             {
                 if (x.ID == ID)
                 {
-                    throw new ArgumentException("Already existing ID");
+                    return false;
                 }
             }
+            return true;
         }
 
-        public void CheckPositivity(IEnumerable<decimal> values)
+        public bool CheckPositivity(IEnumerable<decimal> values)
         {
             foreach(var x in values)
             {
                 if(x <= 0)
                 {
-                    throw new ArgumentException("On of the values was negative");
+                    return false;
                 }
             }
+            return true;
         }
     }
 }

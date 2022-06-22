@@ -9,6 +9,7 @@ namespace PR2
         readonly Lists _lists = new Lists();
         delegate void EnterDataDelegate(string[] name);
         readonly ValidateData _validateData = new ValidateData();
+        readonly NormalizeText _normalizeText = new NormalizeText();
 
         public Lists EnterValues()
         {
@@ -57,26 +58,47 @@ namespace PR2
 
         private void EnterHelicopter(string[] values)
         {
-            _validateData.CheckID(_lists.Helicopters, int.Parse(values[0]));
-            _validateData.CheckPositivity(new List<decimal>{ decimal.Parse(values[2]), decimal.Parse(values[3]), decimal.Parse(values[5])});
-            _validateData.CheckCompanyCipher(values, _lists);
-            _lists.Helicopters.Add(new Helicopter { ID = uint.Parse(values[0]), ModelName = values[1], LoadCapacity = Decimal.Parse(values[2]), MaxDistance = Decimal.Parse(values[3]), CompanyCipher = values[4], MaxHeight = Decimal.Parse(values[5]) });
+            if(!_validateData.CheckID(_lists.Helicopters, int.Parse(values[0])))
+            {
+                throw new ArgumentException("Already existing ID");
+            }
+            if(!_validateData.CheckPositivity(new List<decimal>{ decimal.Parse(values[2]), decimal.Parse(values[3]), decimal.Parse(values[5])}))
+            {
+                throw new ArgumentException("On of the values was negative");
+            }
+            if(!_validateData.CheckCompanyCipher(values, _lists))
+            {
+                throw new ArgumentException("No such company cipher");
+            }
+            _lists.Helicopters.Add(new Helicopter { ID = uint.Parse(values[0]), ModelName = _normalizeText.NormalizeAircraftInfo( values[1]), LoadCapacity = Decimal.Parse(values[2]), MaxDistance = Decimal.Parse(values[3]), CompanyCipher = _normalizeText.NormalizeAircraftInfo( values[4]), MaxHeight = Decimal.Parse(values[5]) });
             
         }
 
         private void EnterPlane(string[] values)
         {
-            _validateData.CheckID(_lists.Planes, int.Parse(values[0]));
-            _validateData.CheckPositivity(new List<decimal> { decimal.Parse(values[2]), decimal.Parse(values[3]), decimal.Parse(values[5]), decimal.Parse(values[6]) });
-            _validateData.CheckCompanyCipher(values, _lists);
-            _lists.Planes.Add(new Plane { ID = uint.Parse(values[0]), ModelName = values[1], LoadCapacity = Decimal.Parse(values[2]), MaxDistance = Decimal.Parse(values[3]), CompanyCipher = values[4], WingSpan = Decimal.Parse(values[5]), TakeofLenght = Decimal.Parse(values[6]) });
+            if(!_validateData.CheckID(_lists.Planes, int.Parse(values[0])))
+            {
+                throw new ArgumentException("Already existing ID");
+            }
+            if(!_validateData.CheckPositivity(new List<decimal> { decimal.Parse(values[2]), decimal.Parse(values[3]), decimal.Parse(values[5]), decimal.Parse(values[6]) }))
+            {
+                throw new ArgumentException("On of the values was negative");
+            }
+            if(!_validateData.CheckCompanyCipher(values, _lists))
+            {
+                throw new ArgumentException("No such company cipher");
+            }
+            _lists.Planes.Add(new Plane { ID = uint.Parse(values[0]), ModelName = _normalizeText.NormalizeAircraftInfo(values[1]), LoadCapacity = Decimal.Parse(values[2]), MaxDistance = Decimal.Parse(values[3]), CompanyCipher = _normalizeText.NormalizeAircraftInfo( values[4]), WingSpan = Decimal.Parse(values[5]), TakeofLenght = Decimal.Parse(values[6]) });
             
         }
 
         private void EnterAirCompanies(string[] values)
         {
-            _validateData.CheckID(_lists.AirCompanies, int.Parse(values[0]));
-            _lists.AirCompanies.Add(new AirCompany { ID = uint.Parse(values[0]), Label = values[1], Office_Location = new OfficeLocation() { Country = values[2], City = values[3], Street = values[4], Number = values[5] }, CreationDate = values[6], CompanyCipher = values[7] });
+            if(!_validateData.CheckID(_lists.AirCompanies, int.Parse(values[0])))
+            {
+                throw new ArgumentException("Already existing ID");
+            }
+            _lists.AirCompanies.Add(new AirCompany { ID = uint.Parse(values[0]), Label = _normalizeText.NormalizeAirCompaniesInfo(values[1]), OfficeLocation = new Location() { Country = _normalizeText.NormalizeAirCompaniesInfo(values[2]), City = _normalizeText.NormalizeAirCompaniesInfo(values[3]), Street = _normalizeText.NormalizeAirCompaniesInfo(values[4]), Number = _normalizeText.NormalizeAirCompaniesInfo(values[5]) }, CreationDate = DateTime.Parse(values[6]), CompanyCipher = _normalizeText.NormalizeAircraftInfo(values[7]) });
         }
 
         private string[] EnterNodes(string listName)

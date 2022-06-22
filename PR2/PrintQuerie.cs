@@ -17,20 +17,21 @@ namespace PR2
 
         public void Print<T>(T answer)
         {
-            Console.WriteLine(answer);
+            Console.WriteLine(answer.ToString());
         }
 
-        public void Print<T,Q>(IOrderedEnumerable<IGrouping<T, Q>> querie)
+        public void Print<T,Q>(Dictionary<T, List<Q>> querie)
         {
             foreach (var groupQuere in querie)
             {
                 Console.WriteLine("\nKey = " + groupQuere.Key);
-                foreach(var answer in groupQuere)
+                foreach(var answer in groupQuere.Value)
                 {
                     Console.WriteLine("\n" + answer.ToString());
                 }
                 
             }
         }
+
     }
 }

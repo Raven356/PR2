@@ -7,9 +7,9 @@ namespace PR2
 {
     class ReadFile
     {
-        public XDocument ReadXmlFile()
+        public XDocument ReadXmlFile(string name)
         {
-            return XDocument.Load("lists.xml");
+            return XDocument.Load(name);
         }
     }
 }
